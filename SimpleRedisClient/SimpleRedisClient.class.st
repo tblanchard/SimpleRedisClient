@@ -112,7 +112,8 @@ SimpleRedisClient >> open [
 	self close.
 	connection := ZdcSocketStream openConnectionToHostNamed: self host port: self port.
 	in := ZnCharacterReadStream on: connection.
-	out := ZnCharacterWriteStream on: connection
+	out := ZnCharacterWriteStream on: connection.
+	self hello: 3.
 ]
 
 { #category : #accessing }
@@ -256,6 +257,11 @@ SimpleRedisClient >> reportAttribute: anObject [
 { #category : #keys }
 SimpleRedisClient >> setAt: aKey [ 
 	^RedisSet new client: self; name: aKey.
+]
+
+{ #category : #keys }
+SimpleRedisClient >> sortedSetAt: aKey [ 
+	^RedisSortedSet new client: self; name: aKey.
 ]
 
 { #category : #writing }

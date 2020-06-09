@@ -5,3 +5,8 @@ Class {
 	#classTraits : 'TRedisSortedSet classTrait',
 	#category : #SimpleRedisClient
 }
+
+{ #category : #running }
+RedisSortedSet >> execute: commandArgs [
+	^ client execute: commandArgs
+]
