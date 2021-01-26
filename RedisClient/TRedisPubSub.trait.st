@@ -1,7 +1,5 @@
 Trait {
 	#name : #TRedisPubSub,
-	#traits : 'TRedis',
-	#classTraits : 'TRedis classTrait',
 	#category : #RedisClient
 }
 

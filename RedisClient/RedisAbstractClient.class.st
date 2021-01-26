@@ -24,16 +24,22 @@ Article
 Class {
 	#name : #RedisAbstractClient,
 	#superclass : #Object,
-	#traits : 'TRedisClient',
-	#classTraits : 'TRedisClient classTrait',
+	#traits : 'TRedisClient + TRedisReader',
+	#classTraits : 'TRedisClient classTrait + TRedisReader classTrait',
 	#instVars : [
-		'host',
-		'port',
+		'servers',
 		'connection',
 		'in',
 		'out',
 		'handlers',
-		'attributes'
+		'attributes',
+		'monitor',
+		'queue',
+		'process',
+		'announcer',
+		'logCommands',
+		'logPushes',
+		'server'
 	],
 	#classVars : [
 		'AlwaysRestart',
@@ -110,12 +116,38 @@ RedisAbstractClient class >> unregister: server [
 	self managedServers remove: server ifAbsent: [ ]
 ]
 
-{ #category : #accessing }
-RedisAbstractClient >> attributes [
-	^attributes
+{ #category : #publishing }
+RedisAbstractClient >> announce: aMessage [
+	| class ann | 
+	class := Smalltalk at: aMessage second asSymbol ifAbsent: [  ].
+	class ifNotNil: [ 
+		ann := class new message: aMessage third.
+		self announcer ifNotNil: [:a | a announce: ann ] ].
 ]
 
-{ #category : #'initialize-release' }
+{ #category : #accessing }
+RedisAbstractClient >> announcer [
+	^announcer first
+]
+
+{ #category : #accessing }
+RedisAbstractClient >> announcer: aRedisAnnouncer [
+	announcer := WeakArray with: aRedisAnnouncer.
+	self refreshSubscriptions
+	
+]
+
+{ #category : #accessing }
+RedisAbstractClient >> attributes [
+	^ attributes
+]
+
+{ #category : #accessing }
+RedisAbstractClient >> attributes: anObject [
+	attributes := anObject
+]
+
+{ #category : #'connection open/close' }
 RedisAbstractClient >> close [
 	connection
 		ifNotNil: [ 
@@ -124,18 +156,69 @@ RedisAbstractClient >> close [
 ]
 
 { #category : #accessing }
+RedisAbstractClient >> connection [
+	^ connection
+]
+
+{ #category : #accessing }
+RedisAbstractClient >> connection: anObject [
+	^ connection := anObject
+]
+
+{ #category : #accessing }
+RedisAbstractClient >> db [
+	^ self server db
+]
+
+{ #category : #running }
+RedisAbstractClient >> execute: commandArgs [
+	^monitor critical: [ | reply |
+	Transcript show: ('Redis execute: ', commandArgs asString); cr.
+	self writeCommand: commandArgs.
+	reply := self readReply. 
+	Transcript show: ('Redis leave execute: ', commandArgs asString); cr.
+	reply ] 
+]
+
+{ #category : #running }
+RedisAbstractClient >> execute: commandArgs await: aMessageType [
+	"lazy launch listener - it isn't required until this is called"
+	self startListening.
+	^ monitor critical: [ | reply |
+		logCommands 
+			ifTrue: [Transcript show: ('Redis execute: ', commandArgs asString, 'await: ', aMessageType); cr].
+		self writeCommand: commandArgs.
+		reply := self waitReply: aMessageType.
+		logCommands 
+			ifTrue: [Transcript show: ('Redis leave execute: ', commandArgs asString, 'await: ', aMessageType); cr].
+		reply
+		 ]
+]
+
+{ #category : #running }
+RedisAbstractClient >> executeInline: command [
+	^monitor critical: [ | reply |
+	Transcript show: ('Redis executeInline: ', command asString); cr.
+	self writeInlineCommand: command.
+	reply := self readReply.
+	Transcript show: ('Redis leave executeInline: ', command asString); cr.
+	reply
+	 ]
+]
+
+{ #category : #accessing }
 RedisAbstractClient >> handlers [ 
 	^ handlers
 ]
 
 { #category : #accessing }
-RedisAbstractClient >> host [
-	^ host ifNil: [ host := 'localhost' ]
+RedisAbstractClient >> handlers: anObject [
+	handlers := anObject
 ]
 
 { #category : #accessing }
-RedisAbstractClient >> host: string [
-	host := string
+RedisAbstractClient >> host [
+	^ self server host
 ]
 
 { #category : #accessing }
@@ -143,13 +226,54 @@ RedisAbstractClient >> in [
 	^in
 ]
 
-{ #category : #'initialize-release' }
+{ #category : #initialization }
 RedisAbstractClient >> initialize [ 
 	super initialize.
-	handlers := self buildReadHandlers
+	logPushes := false.
+	logCommands := true.
+	servers := { RedisServerSpec new }.
+	handlers := self buildReadHandlers.
+	monitor := Semaphore forMutualExclusion.
+	queue := OrderedCollection new.
+	announcer := RedisAnnouncer on: self
 ]
 
-{ #category : #'initialize-release' }
+{ #category : #testing }
+RedisAbstractClient >> isListening [
+	^process notNil
+]
+
+{ #category : #testing }
+RedisAbstractClient >> isOpen [
+	^connection notNil
+]
+
+{ #category : #accessing }
+RedisAbstractClient >> logCommands [
+	^ logCommands
+]
+
+{ #category : #accessing }
+RedisAbstractClient >> logCommands: anObject [
+	logCommands := anObject
+]
+
+{ #category : #accessing }
+RedisAbstractClient >> logPushes [
+	^ logPushes
+]
+
+{ #category : #accessing }
+RedisAbstractClient >> logPushes: anObject [
+	logPushes := anObject
+]
+
+{ #category : #accessing }
+RedisAbstractClient >> monitor [ 
+	^monitor
+]
+
+{ #category : #'connection open/close' }
 RedisAbstractClient >> open [
 	self close.
 	connection := ZdcSocketStream openConnectionToHostNamed: self host port: self port.
@@ -159,13 +283,18 @@ RedisAbstractClient >> open [
 ]
 
 { #category : #accessing }
-RedisAbstractClient >> port [
-	^ port ifNil: [ port := 6379 ]
+RedisAbstractClient >> out [
+	^ out
 ]
 
 { #category : #accessing }
-RedisAbstractClient >> port: integer [
-	port := integer
+RedisAbstractClient >> out: anObject [
+	^ out := anObject
+]
+
+{ #category : #accessing }
+RedisAbstractClient >> port [
+	^ self server port
 ]
 
 { #category : #accessing }
@@ -174,11 +303,73 @@ RedisAbstractClient >> postPushNotification: notification [
 ]
 
 { #category : #accessing }
+RedisAbstractClient >> queue [ 
+	^ queue
+]
+
+{ #category : #accessing }
+RedisAbstractClient >> randomServer [
+	^self servers at: (SharedRandom globalGenerator nextInt: self servers size)
+]
+
+{ #category : #accessing }
 RedisAbstractClient >> reportAttribute: anObject [
 	attributes := Array streamContents: [ :s | 
 		attributes ifNotNil: [ s nextPutAll: attributes ]. 
 		s nextPut: anObject
 		]
+]
+
+{ #category : #accessing }
+RedisAbstractClient >> server [
+	^ server ifNil: [ server := self randomServer ]
+]
+
+{ #category : #accessing }
+RedisAbstractClient >> server: anObject [
+	server := anObject
+]
+
+{ #category : #accessing }
+RedisAbstractClient >> servers [
+	^servers ifNil: [ servers := { RedisServerSpec new } ]
+]
+
+{ #category : #accessing }
+RedisAbstractClient >> servers: aStringOrArray [
+	
+	aStringOrArray isString 
+		ifTrue: [ 
+			servers := (aStringOrArray splitOn: '|') 
+				collect: [ :ea | RedisServerSpec on: ea asUrl ] ]
+		ifFalse: [ 
+			aStringOrArray isArray 
+				ifTrue: [servers := aStringOrArray 
+					collect: [:ea | RedisServerSpec on: ea asUrl] ] ].
+	servers isEmpty ifTrue: [ servers := { RedisServerSpec new } ].
+	server := self randomServer
+]
+
+{ #category : #running }
+RedisAbstractClient >> startListening [
+	process ifNotNil: [ ^self ].
+	process := [
+		[ 	| timeout |
+			monitor critical: [ [  
+				logPushes ifTrue: [Transcript show: 'Redis poll...'; cr].
+				timeout := in wrappedStream timeout.
+				in wrappedStream timeout: 0.
+				self readAllPushNotifications ] ensure: [in wrappedStream timeout: timeout]]. 
+			logPushes ifTrue: [Transcript show: 'Redis end poll...'; cr].
+			Processor yield ] 
+		repeat ] forkNamed: 'RedisClient Polling'.
+]
+
+{ #category : #running }
+RedisAbstractClient >> stopListening [
+	process ifNotNil: [ 
+		process terminate.
+		process := nil ]
 ]
 
 { #category : #writing }
