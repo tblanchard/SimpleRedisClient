@@ -4,11 +4,6 @@ Trait {
 }
 
 { #category : #publishing }
-TRedisPubSub >> announce: aMessage [
-	^ self explicitRequirement
-]
-
-{ #category : #publishing }
 TRedisPubSub >> publish: aChannel message: aMessage [
 	self execute: { #PUBLISH. aChannel. aMessage }
 ]

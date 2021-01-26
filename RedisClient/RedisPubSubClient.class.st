@@ -6,11 +6,6 @@ Class {
 	#category : #RedisClient
 }
 
-{ #category : #publishing }
-RedisPubSubClient >> announce: aMessage [
-	^ super announce: aMessage
-]
-
 { #category : #'initialize-release' }
 RedisPubSubClient >> open [ 
 	super open.

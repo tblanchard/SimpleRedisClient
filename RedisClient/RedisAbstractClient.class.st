@@ -116,15 +116,6 @@ RedisAbstractClient class >> unregister: server [
 	self managedServers remove: server ifAbsent: [ ]
 ]
 
-{ #category : #publishing }
-RedisAbstractClient >> announce: aMessage [
-	| class ann | 
-	class := Smalltalk at: aMessage second asSymbol ifAbsent: [  ].
-	class ifNotNil: [ 
-		ann := class new message: aMessage third.
-		self announcer ifNotNil: [:a | a announce: ann ] ].
-]
-
 { #category : #accessing }
 RedisAbstractClient >> announcer [
 	^announcer first
@@ -297,9 +288,16 @@ RedisAbstractClient >> port [
 	^ self server port
 ]
 
-{ #category : #accessing }
-RedisAbstractClient >> postPushNotification: notification [ 
-	Transcript show: notification printString; cr.
+{ #category : #reading }
+RedisAbstractClient >> postPushNotification: aMessage [ 
+	(aMessage first endsWith: 'message') 
+		ifTrue: [ | announcement |
+			announcement := (RedisAnnouncement new)
+				channel: (aMessage at: aMessage size -1);
+				message: aMessage last;
+				yourself.
+			^self announcer announce: announcement] 
+		ifFalse: [ self queue add: aMessage ]
 ]
 
 { #category : #accessing }
