@@ -1,7 +1,5 @@
 Trait {
 	#name : #TRedisSortedSet,
-	#traits : 'TRedisEnumeration + TRedisExpiration',
-	#classTraits : 'TRedisEnumeration classTrait + TRedisExpiration classTrait',
 	#category : #RedisClient
 }
 

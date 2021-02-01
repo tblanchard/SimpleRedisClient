@@ -118,7 +118,7 @@ RedisAbstractClient class >> unregister: server [
 
 { #category : #accessing }
 RedisAbstractClient >> announcer [
-	^announcer first
+	^announcer
 ]
 
 { #category : #accessing }
@@ -140,10 +140,12 @@ RedisAbstractClient >> attributes: anObject [
 
 { #category : #'connection open/close' }
 RedisAbstractClient >> close [
+	self stopListening.
 	connection
 		ifNotNil: [ 
 			[ connection close ] on: Error do: [ #ignore ].
-			in := out := connection := nil ]
+			in := out := connection := nil.
+			self unregister ]
 ]
 
 { #category : #accessing }
@@ -226,7 +228,7 @@ RedisAbstractClient >> initialize [
 	handlers := self buildReadHandlers.
 	monitor := Semaphore forMutualExclusion.
 	queue := OrderedCollection new.
-	announcer := RedisAnnouncer on: self
+	announcer := RedisAnnouncer new.
 ]
 
 { #category : #testing }
@@ -271,6 +273,7 @@ RedisAbstractClient >> open [
 	in := ZnCharacterReadStream on: connection.
 	out := ZnCharacterWriteStream on: connection.
 	self hello: 3.
+	self register.
 ]
 
 { #category : #accessing }
@@ -308,6 +311,13 @@ RedisAbstractClient >> queue [
 { #category : #accessing }
 RedisAbstractClient >> randomServer [
 	^self servers at: (SharedRandom globalGenerator nextInt: self servers size)
+]
+
+{ #category : #'connection open/close' }
+RedisAbstractClient >> register [
+	"Ask for start/stop to be sent to me on System startUp/shutDown"
+	
+	self class register: self
 ]
 
 { #category : #accessing }
@@ -348,6 +358,12 @@ RedisAbstractClient >> servers: aStringOrArray [
 	server := self randomServer
 ]
 
+{ #category : #'connection open/close' }
+RedisAbstractClient >> start [ 
+	self stop: false.
+	self open
+]
+
 { #category : #running }
 RedisAbstractClient >> startListening [
 	process ifNotNil: [ ^self ].
@@ -363,11 +379,36 @@ RedisAbstractClient >> startListening [
 		repeat ] forkNamed: 'RedisClient Polling'.
 ]
 
+{ #category : #'connection open/close' }
+RedisAbstractClient >> stop [
+	"Stop me. I will stop listening on my port for incoming HTTP connections.
+	Does nothing when I am not running"
+	
+	self stop: true 
+]
+
+{ #category : #'connection open/close' }
+RedisAbstractClient >> stop: unregister [
+	"Stop me. I will stop listening on my port for incoming HTTP connections.
+	If unregister is true, unregister me from the list of managed instances.
+	Does nothing when I am not running"
+	
+	self isOpen ifFalse: [ ^ self ].
+	self close
+]
+
 { #category : #running }
 RedisAbstractClient >> stopListening [
 	process ifNotNil: [ 
 		process terminate.
 		process := nil ]
+]
+
+{ #category : #'connection open/close' }
+RedisAbstractClient >> unregister [
+	"Ask for start/stop to no longer be sent to me on System startUp/shutDown"
+
+	self class unregister: self
 ]
 
 { #category : #writing }

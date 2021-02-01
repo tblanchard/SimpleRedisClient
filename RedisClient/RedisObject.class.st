@@ -9,6 +9,8 @@ These operations are defined as traits and adopted in subclasses.
 Class {
 	#name : #RedisObject,
 	#superclass : #Object,
+	#traits : 'TRedisEnumeration + TRedisExpiration',
+	#classTraits : 'TRedisEnumeration classTrait + TRedisExpiration classTrait',
 	#instVars : [
 		'client',
 		'name'

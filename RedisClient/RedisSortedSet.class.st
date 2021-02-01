@@ -13,3 +13,13 @@ Class {
 	#classTraits : 'TRedisSortedSet classTrait',
 	#category : #RedisClient
 }
+
+{ #category : #accessing }
+RedisSortedSet >> contents [
+	^ self values
+]
+
+{ #category : #accessing }
+RedisSortedSet >> name [
+	^ name
+]

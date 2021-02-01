@@ -13,8 +13,6 @@ as the name of the hash is typically the first argument to any command involving
 "
 Trait {
 	#name : #TRedisHash,
-	#traits : 'TRedisEnumeration + TRedisExpiration',
-	#classTraits : 'TRedisEnumeration classTrait + TRedisExpiration classTrait',
 	#category : #RedisClient
 }
 

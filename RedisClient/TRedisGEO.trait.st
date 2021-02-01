@@ -11,8 +11,6 @@ An array of nil is returned when key does not exist and error is returned when k
 "
 Trait {
 	#name : #TRedisGEO,
-	#traits : 'TRedisEnumeration + TRedisExpiration',
-	#classTraits : 'TRedisEnumeration classTrait + TRedisExpiration classTrait',
 	#category : #RedisClient
 }
 
@@ -47,10 +45,8 @@ TRedisGEO >> distancefrom: firstLocation to: secondLocation [
 ]
 
 { #category : #calculating }
-TRedisGEO >> geoCode: aLocationOrArray [ 
-	^self execute: ({ #GEOPOS. self name }, aLocationOrArray isString 
-		ifFalse: [ aLocationOrArray asArray ] 
-		ifTrue: [ { aLocationOrArray } ])
+TRedisGEO >> geoCode: aName [ 
+	^self execute: { #GEOPOS. self name. aName }
 ]
 
 { #category : #calculating }
@@ -59,10 +55,8 @@ TRedisGEO >> geoCodeAll: anArray [
 ]
 
 { #category : #calculating }
-TRedisGEO >> geoHash: aLocationOrArray [ 
-	^self execute: ({ #GEOHASH. self name }, aLocationOrArray isString 
-		ifFalse: [ aLocationOrArray asArray ] 
-		ifTrue: [ { aLocationOrArray } ])
+TRedisGEO >> geoHash: aName [ 
+	^self execute: { #GEOHASH. self name. aName }
 ]
 
 { #category : #calculating }

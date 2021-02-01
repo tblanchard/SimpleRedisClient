@@ -1,3 +1,6 @@
+"
+I represent a connection to a Redis server.
+"
 Class {
 	#name : #RedisServerSpec,
 	#superclass : #Object,
