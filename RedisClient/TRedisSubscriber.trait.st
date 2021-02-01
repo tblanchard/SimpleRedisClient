@@ -1,7 +1,22 @@
+"
+I implement the redis subscriber protocol for Pub/Sub which is detailed at https://redis.io/topics/pubsub
+
+ The commands that are allowed in the context of a subscribed client are SUBSCRIBE, PSUBSCRIBE, UNSUBSCRIBE, PUNSUBSCRIBE, PING and QUIT.
+
+I also implement the Announcer listener registration methods when:do and friends.
+
+My version converts subscriptions to use RedisAnnouncement which captures the Redis concept of
+a subscriptions as channel/message.
+"
 Trait {
 	#name : #TRedisSubscriber,
 	#category : #RedisClient
 }
+
+{ #category : #announcer }
+TRedisSubscriber >> announcer [ 
+	^ self explicitRequirement
+]
 
 { #category : #subscription }
 TRedisSubscriber >> psubscribe: aTopicOrListOfTopics [

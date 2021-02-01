@@ -73,10 +73,10 @@ TRedisReader >> queue [
 TRedisReader >> readAllPushNotifications [ 
 	"Only call this if you are after a message that is not a push notification"
 	"Push notifications are retrieved with waitReply: aMessageType"
-	| in first message |
-	in := self in.
-	[ [ in peek = $> ] on: ConnectionTimedOut do: [ false ] ] whileTrue: [
-			first := self in next.
+	| input first message |
+	input := self in.
+	[ [ input peek = $> ] on: ConnectionTimedOut do: [ false ] ] whileTrue: [
+			first := input next.
 			message := (self handlers at: first ifAbsent: [ self error: 'Unknown reply type' ]) value. 
 			self postPushNotification: message ].	
 
@@ -248,6 +248,6 @@ TRedisReader >> waitReply: aMessageType [
 		index := self queue detectIndex: [ :ea | ea first = aMessageType] ifNone: [ 0 ]. 
 			index > 0 
 				ifTrue: [ ^self queue removeAt: index ]
-				ifFalse: [ self yield ] ] repeat
+				ifFalse: [ Processor yield ] ] repeat
 
 ]

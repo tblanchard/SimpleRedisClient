@@ -18,6 +18,11 @@ Class {
 	#category : #RedisClient
 }
 
+{ #category : #announcer }
+RedisSubscriberClient >> announcer [ 
+	^ announcer
+]
+
 { #category : #'initialize-release' }
 RedisSubscriberClient >> open [ 
 	super open.
@@ -26,6 +31,7 @@ RedisSubscriberClient >> open [
 
 { #category : #running }
 RedisSubscriberClient >> refreshSubscriptions [
-	self announcer ifNotNil: [ :ann |
-		self subscribe: self subscribedChannels ]
+	self announcer ifNotNil: [ :ann || channels |
+		channels := self subscribedChannels.
+		channels ifNotEmpty: [self subscribe: channels ]]
 ]

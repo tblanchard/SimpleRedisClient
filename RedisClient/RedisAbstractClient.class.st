@@ -144,8 +144,7 @@ RedisAbstractClient >> close [
 	connection
 		ifNotNil: [ 
 			[ connection close ] on: Error do: [ #ignore ].
-			in := out := connection := nil.
-			self unregister ]
+			in := out := connection := nil]
 ]
 
 { #category : #accessing }
@@ -371,12 +370,12 @@ RedisAbstractClient >> startListening [
 		[ 	| timeout |
 			monitor critical: [ [  
 				logPushes ifTrue: [Transcript show: 'Redis poll...'; cr].
-				timeout := in wrappedStream timeout.
-				in wrappedStream timeout: 0.
-				self readAllPushNotifications ] ensure: [in wrappedStream timeout: timeout]]. 
+				timeout := connection timeout.
+				connection timeout: 0.
+				self readAllPushNotifications ] ensure: [connection timeout: timeout]]. 
 			logPushes ifTrue: [Transcript show: 'Redis end poll...'; cr].
 			Processor yield ] 
-		repeat ] forkNamed: 'RedisClient Polling'.
+		repeat ] forkAt: Processor userBackgroundPriority named: 'RedisClient Polling'.
 ]
 
 { #category : #'connection open/close' }
@@ -394,6 +393,7 @@ RedisAbstractClient >> stop: unregister [
 	Does nothing when I am not running"
 	
 	self isOpen ifFalse: [ ^ self ].
+	unregister ifTrue: [ self unregister ].
 	self close
 ]
 

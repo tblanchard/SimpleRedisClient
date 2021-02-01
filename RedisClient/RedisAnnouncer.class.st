@@ -1,3 +1,8 @@
+"
+I am a custom announcer that works with Redis Pub/Sub messages.
+
+
+"
 Class {
 	#name : #RedisAnnouncer,
 	#superclass : #Announcer,
