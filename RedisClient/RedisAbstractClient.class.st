@@ -45,7 +45,7 @@ Class {
 		'AlwaysRestart',
 		'ManagedServers'
 	],
-	#category : #RedisClient
+	#category : #'RedisClient-Client'
 }
 
 { #category : #'class initialization' }

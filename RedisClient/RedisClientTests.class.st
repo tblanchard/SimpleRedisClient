@@ -7,7 +7,7 @@ Class {
 	#instVars : [
 		'client'
 	],
-	#category : #RedisClient
+	#category : #'RedisClient-Tests'
 }
 
 { #category : #running }

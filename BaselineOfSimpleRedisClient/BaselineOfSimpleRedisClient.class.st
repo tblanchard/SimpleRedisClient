@@ -11,5 +11,5 @@ Class {
 { #category : #baselines }
 BaselineOfSimpleRedisClient >> baseline: spec [
 	<baseline>
-	spec for: #common do: [ spec package: 'SimpleRedisClient' ]
+	spec for: #common do: [ spec package: 'RedisClient' ]
 ]

@@ -15,7 +15,7 @@ Class {
 	#superclass : #RedisAbstractClient,
 	#traits : 'TRedisSubscriber',
 	#classTraits : 'TRedisSubscriber classTrait',
-	#category : #RedisClient
+	#category : #'RedisClient-Client'
 }
 
 { #category : #announcer }

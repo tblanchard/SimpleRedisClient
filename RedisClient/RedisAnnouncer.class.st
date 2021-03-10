@@ -9,7 +9,7 @@ Class {
 	#instVars : [
 		'client'
 	],
-	#category : #RedisClient
+	#category : #'RedisClient-PubSub'
 }
 
 { #category : #'instance creation' }
