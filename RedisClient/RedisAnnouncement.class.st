@@ -8,7 +8,7 @@ Class {
 		'channel',
 		'message'
 	],
-	#category : #RedisClient
+	#category : #'RedisClient-PubSub'
 }
 
 { #category : #creation }
