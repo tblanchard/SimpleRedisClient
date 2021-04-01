@@ -1,6 +1,6 @@
 Class {
 	#name : #RedisConnectionPresenter,
-	#superclass : #SpPresenter,
+	#superclass : #RedisPresenter,
 	#instVars : [
 		'connection'
 	],

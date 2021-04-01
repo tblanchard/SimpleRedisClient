@@ -25,7 +25,7 @@ Class {
 	#name : #RedisAbstractClient,
 	#superclass : #Object,
 	#traits : 'TRedisClient + TRedisReader',
-	#classTraits : 'TRedisClient classTrait + TRedisReader classTrait',
+	#classTraits : 'TRedisIcons classTrait + TRedisClient classTrait + TRedisReader classTrait',
 	#instVars : [
 		'servers',
 		'connection',
@@ -107,6 +107,11 @@ RedisAbstractClient class >> startUp: resuming [
 				ifAbsent: [ 
 					Smalltalk addDeferredStartupAction: [ 
 						self managedServers do: [ :each | each start ] ] ] ]
+]
+
+{ #category : #'as yet unclassified' }
+RedisAbstractClient class >> systemIconName [
+	^'server'
 ]
 
 { #category : #'system startup' }
@@ -309,7 +314,9 @@ RedisAbstractClient >> queue [
 
 { #category : #accessing }
 RedisAbstractClient >> randomServer [
-	^self servers at: (SharedRandom globalGenerator nextInt: self servers size)
+
+	^ self servers at:
+		  (SharedRandom globalGenerator nextInteger: self servers size)
 ]
 
 { #category : #'connection open/close' }
