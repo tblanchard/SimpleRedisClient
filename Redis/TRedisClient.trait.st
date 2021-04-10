@@ -201,7 +201,8 @@ TRedisClient >> hello: protocol username: aUsername password: aPassword name: aN
 
 { #category : #client }
 TRedisClient >> info [
-	^self execute: { #INFO } 
+	^self parseInfo: (self execute: { #INFO })
+
 ]
 
 { #category : #client }
@@ -228,7 +229,29 @@ default: Return only the default set of sections
 everything: Includes all and modules
 When no parameter is provided, the default option is assumed."
 
-	^self execute: { #INFO. anElement }
+	^(self parseInfo: (self execute: { #INFO. anElement })) at: anElement
+]
+
+{ #category : #client }
+TRedisClient >> parseInfo: text [
+	| dict current |
+	dict := Dictionary new.
+	text linesDo: [ :line |
+		(line beginsWith: '#') 
+			ifTrue: [ 
+				current := Dictionary new. 
+				dict at: (line copyWithoutFirst trimmed) put: current
+				]
+			ifFalse: [ line trimmed 
+				ifNotEmpty: [ :v || pair | 
+					pair := v splitOn: ':'.
+					current 
+						ifNotNil: [ 
+							current 
+								at: pair first trimmed 
+								put: pair last trimmed ] ] ] ].
+	^dict
+	
 ]
 
 { #category : #client }
